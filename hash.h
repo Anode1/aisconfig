@@ -1,39 +1,22 @@
-/**
- * Copyright (C) 2001 Vasili Gavrilov
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
-
-#ifndef _HASH_H
-#define _HASH_H
-
-#include "common.h"
+/* Copyright (C) 2001 Vasili Gavrilov. GNU GPL v2 or later. Hardened 2026. */
+/* hash.h -- a generic string -> void* hash table (separate chaining). The table
+ * owns a copy of each key; the caller owns the stored data. */
+#ifndef HASH_H
+#define HASH_H
 
 struct hash;
 
-struct hash* hash_create(long size);
+struct hash *hash_create(long size);
+void         hash_delete(struct hash *table);              /* frees keys + table */
 
-void* hash_put(struct hash *table, char* key, void* data);
+/* Insert or replace. Returns the data now stored under key. */
+void *hash_put(struct hash *table, const char *key, void *data);
+void *hash_get(struct hash *table, const char *key);       /* NULL if absent */
 
-void* hash_get(struct hash *table, char* key);
+/* Remove key; returns its data (caller frees) or NULL. */
+void *hash_delete_entry(struct hash *table, const char *key);
 
-/* Returns pointer to the data which should be deallocated by the caller */
-void* hash_delete_entry(struct hash *table, char* key);
+/* Call func on each stored datum (e.g. free). */
+void hash_call(struct hash *table, void (*func)(void *));
 
-void hash_delete(struct hash *table);
-
-/* Callback for each element of the hash */
-void hash_call(struct hash *table, void (*func) (void*));
-
-/* Print all keys in stored order - useful for debugging */
-void hash_print_all_keys(struct hash* table);
-
-#endif
+#endif /* HASH_H */

@@ -1,113 +1,55 @@
-/**
- * Copyright (C) 2001 Vasili Gavrilov
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
-
-#include "common.h"
+/* Copyright (C) 2001 Vasili Gavrilov. GNU GPL v2 or later. Hardened 2026. */
+/* params.c -- see params.h. Parses "key = value" lines: blank lines and lines
+ * starting with '#' are ignored; the key is split at the first '='; surrounding
+ * spaces are trimmed. Values are heap copies owned by the table. */
 #include "params.h"
+#include "hash.h"
+#include "utils.h"
+#include "common.h"
 
-#define MAX_MAPPING_FILE_LINE 1024
-#define MAX_KEY 1024
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-struct hash* params;
+#define PARAMS_LINE_MAX 1024
 
-/* Forward declarations */
-static int read_mapping(const char *filepath, struct hash *map);
+static struct hash *params;
 
+int params_load(const char *path) {
+    char line[PARAMS_LINE_MAX];
+    FILE *fp = fopen(path, "r");
+    if (!fp) return -1;
 
-int params_init(){
-	int exit_code;
-	params=hash_create(100);
+    if (!params) params = hash_create(100);
 
-	if((exit_code = read_mapping("system.properties", params)))
-		return exit_code;
+    while (fgets(line, sizeof line, fp)) {
+        char *eq, *key, *val;
+        line[strcspn(line, "\r\n")] = '\0';        /* drop the newline */
+        if (line[0] == '#' || line[0] == '\0') continue;
 
-	return 0;
+        eq = strchr(line, '=');
+        if (!eq) continue;                          /* not key=value */
+        *eq = '\0';
+        key = line;
+        val = eq + 1;
+
+        rtrim(key, ' '); ltrim(key, ' ');
+        rtrim(val, ' '); ltrim(val, ' ');
+        if (key[0] == '\0') continue;
+
+        hash_put(params, key, xstrdup(val));        /* table copies the key */
+    }
+    fclose(fp);
+    return 0;
 }
 
-char* params_get(char *key){
-	return (char*)hash_get(params, key);
+const char *params_get(const char *key) {
+    return params ? (const char *)hash_get(params, key) : NULL;
 }
 
-
-static int read_mapping(const char *filepath, struct hash *map){
-
-	FILE *fp = NULL;
-	char line[MAX_MAPPING_FILE_LINE];
-	char *delim;
-	char *valStart;
-	long lineNum = 0;
-	long len;
-	char key_buffer[MAX_KEY + 1];
-	char val_buffer[MAX_MAPPING_FILE_LINE + 1];
-
-
-	if ((fp = fopen(filepath, "r")) == NULL){
-		printf("Cannot read %s\n", filepath);
-		return -1;
-	}
-
-	if(FALSE)
-		PRINT("%s loaded\n", filepath);
-
-	errno=0;
-
-	while(fgets(line, sizeof(line), fp) != NULL){
-
-		if(errno){
-			fprintf(stderr, "Can't read from file %s: %s\n", filepath, strerror(errno));
-			exit(-1);
-		}
-
-		if(line[sizeof(line)-1] == '\n')
-			line[sizeof(line)-1] = '\0';
-
-		len = strlen(line);
-
-		if(len == 0){
-			PRINT("WARN: line %ld is empty -- ignored" ,lineNum);
-			continue;
-		}
-
-		delim = strchr(line, '=');
-		if(delim == NULL){
-			continue;
-		}
-
-		*delim = '\0';
-		valStart=delim+1;
-
-		strcpy(key_buffer, line);
-   	   	rtrim(key_buffer, ' '); /* remove '\n' (Glibc treats '\r' in fgets) */
-
-   	   	strcpy(val_buffer, valStart);
-		rtrim(val_buffer, '\n');
-		rtrim(val_buffer, ' ');
-
-
-     	hash_put(map, strdup(key_buffer), strdup(val_buffer));
-
-		lineNum++;
-	}/* fgets */
-
-	errno=0;
-
-	fclose(fp);
-
-	if(errno)
-		fprintf(stderr, "Can't close file descriptor %s: %s\n", filepath, strerror(errno));
-
-	return 0;
+void params_free(void) {
+    if (!params) return;
+    hash_call(params, free);                        /* free the value copies */
+    hash_delete(params);                            /* frees keys + table    */
+    params = NULL;
 }
-
-
-

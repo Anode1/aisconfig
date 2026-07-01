@@ -1,24 +1,12 @@
-/**
- * Copyright (C) 2001 Vasili Gavrilov
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
+/* Copyright (C) 2001 Vasili Gavrilov. GNU GPL v2 or later. Hardened 2026. */
+/* params.h -- a tiny key=value config store, backed by the hash table. Load a
+ * .properties file once, then look up keys. This is where a project adds its
+ * configurable knobs: put them in the file, read them with params_get. */
+#ifndef PARAMS_H
+#define PARAMS_H
 
-#ifndef _PARAMS_H
-#define _PARAMS_H
+int         params_load(const char *path);   /* 0 ok, -1 if the file won't open */
+const char *params_get(const char *key);     /* NULL if absent */
+void        params_free(void);
 
-#include "hash.h"
-#include "common.h"
-
-int params_init(void);
-char* params_get(char *key);
-
-#endif
+#endif /* PARAMS_H */

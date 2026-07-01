@@ -1,75 +1,53 @@
+# Copyright (C) 2001 Vasili Gavrilov. GNU GPL v2 or later. Hardened 2026.
 #
-# Copyright (C) 2001 Vasili Gavrilov
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-#
+# ais-style build. Honors the standard variables (CC CFLAGS CPPFLAGS LDFLAGS
+# LDLIBS); project-required flags are APPENDED, never override yours. Drop in a
+# .c -- here or one directory down -- and it compiles, no editing this file.
+#   make | make release | make debug | make pedantic | make ut | make clean
+SHELL = /bin/sh
 
-SHELL=/bin/sh
+BIN     = aisconfig
+TESTBIN = aisconfig_ut
 
-BIN=test
+CC       ?= cc
+CFLAGS   ?= -O2
+CPPFLAGS ?=
+LDFLAGS  ?=
+LDLIBS   ?=
 
-ARCH := `uname`
+# project-required flags, applied alongside (not over) the user's
+STD  = -std=c99
+WARN = -W -Wall
+PROJ = $(STD) $(WARN)
 
-NOCYGWIN=
+# every *.c at top level or one dir down; add a file, no edit needed
+SOURCES.c := $(wildcard *.c) $(wildcard */*.c)
+OBJS       = $(SOURCES.c:.c=.o)
 
-ifeq ($(ARCH), CYGWIN32/95)
-	NOCYGWIN= -mno-cygwin
-endif
-ifeq ($(ARCH), CYGWIN32/NT)
-	NOCYGWIN= -mno-cygwin
-endif
-
-
-#consider all *.c as sources  
-SOURCES.c := $(wildcard *.c)
-
-
-CFLAGS= $(NOCYGWIN) -ansi -W -Wall
-CPPFLAGS=
-CC=gcc
-SLIBS=
-INCLUDES=
-OBJS=$(SOURCES.c:.c=.o)
-LINK=gcc $(CFLAGS)
-LFLAGS=-lm $()
-
-debug : CFLAGS = $(NOCYGWIN) -ansi -W -Wall -g -Wundef
-pedantic : CFLAGS = $(NOCYGWIN) -ansi -W -Wall -g -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations
-release : CFLAGS = $(NOCYGWIN) -ansi -W -Wall -O2
-ut : CFLAGS = $(NOCYGWIN) -ansi -g -DUNIT_TEST -DHASH_UNIT_TEST
+debug    : CFLAGS = -g -O0
+debug    : WARN  += -Wundef
+pedantic : STD    = -std=c99 -pedantic
+pedantic : WARN  += -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations
+release  : CFLAGS = -O2
 
 .SUFFIXES:
 .SUFFIXES: .d .o .h .c
-.c.o: ; $(CC) $(INCLUDES) $(CFLAGS) -MMD -c $*.c 
+%.o: %.c
+	$(CC) $(PROJ) $(CPPFLAGS) $(CFLAGS) -MMD -c $< -o $@
 
-.PHONY: clean
-
-%.d: %.c
-	@set -e; rm -f $@; \
-	$(CC) -M $(CFLAGS) $< > $@.$$$$; \
-	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
-
-all release debug pedantic ut: $(BIN)
+.PHONY: all release debug pedantic ut clean
+all release debug pedantic: $(BIN)
 
 $(BIN): $(OBJS)
-	$(LINK) $(FLAGS) -o $(BIN) $(OBJS) $(LFLAGS)
+	$(CC) $(PROJ) $(CFLAGS) $(LDFLAGS) -o $(BIN) $(OBJS) $(LDLIBS)
+
+# ut: all sources with -DUNIT_TEST -- main.c's main() compiles out, tests.c's in.
+$(TESTBIN): $(SOURCES.c)
+	$(CC) $(PROJ) -g -DUNIT_TEST $(CPPFLAGS) $(SOURCES.c) -o $(TESTBIN) $(LDLIBS)
+ut: $(TESTBIN)
+	./$(TESTBIN)
 
 clean:
-	-rm -f $(BIN) $(OBJS) *.d
+	-rm -f $(BIN) $(TESTBIN) $(OBJS) $(OBJS:.o=.d)
 
-
-include $(sources:.c=.d)
-
+-include $(OBJS:.o=.d)

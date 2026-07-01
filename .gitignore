@@ -1,0 +1,5 @@
+# build output
+aisconfig
+aisconfig_ut
+*.o
+*.d
