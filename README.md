@@ -22,7 +22,7 @@ build, how to test, or how to write it safely.
 
 The default `process()` is one public, dependency-free example: a short id for a
 string (Base64 of its MD5, padding dropped). `md5.c` and `base64.c` are leftovers
-from a real project, kept only as example utilities the default processor uses;
+from a real production project, kept only as example utilities the default processor uses;
 delete them when you replace `process()` with your own.
 
 ## Layout
