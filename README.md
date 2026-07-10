@@ -10,6 +10,7 @@ build, how to test, or how to write it safely.
 
     make            # build ./aisconfig
     make ut         # build and run the in-place unit tests
+    make ut-asan    # run the tests under AddressSanitizer + UBSan
     make debug      # -g -DDEBUG
     make pedantic   # strict warnings (-pedantic -Wshadow -Wstrict-prototypes ...)
     make release    # -O2 -DNDEBUG
@@ -66,6 +67,24 @@ The rules the code already follows, so new code matches:
 - **One concept per file**, `static` for anything module-private, `const`-correct,
   `size_t` for sizes.
 - **Tests in place.** `make ut` is already wired; a feature ships with a `CHECK`.
+- **Sanitizer-clean.** `make ut-asan` runs the tests under AddressSanitizer and
+  UBSan; a leak, overflow, or undefined behavior is a defect. Run it before
+  tagging.
+
+These are the working subset. The full rationale, stack-first and bounded-memory
+to the avionics and medical-device standard (NASA Power of Ten, MISRA C:2012
+rule 21.3), is written up in `ais` (see below): this skeleton is one instance of
+it, not the argument for it.
+
+## See also
+
+- [ais](https://github.com/Anode1/ais) - the associative-memory engine these
+  conventions come from; its
+  [`doc/dev/STYLE.md`](https://github.com/Anode1/ais/blob/main/doc/dev/STYLE.md)
+  is the full coding-style rationale (the MISRA / Power-of-Ten discipline the
+  Style section above condenses).
+- [agent-recipes](https://github.com/Anode1/agent-recipes) - short prompts for
+  working with coding agents; this template is the C starter it points to.
 
 ## Third-party notices
 

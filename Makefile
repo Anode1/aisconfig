@@ -3,7 +3,7 @@
 # ais-style build. Honors the standard variables (CC CFLAGS CPPFLAGS LDFLAGS
 # LDLIBS); project-required flags are APPENDED, never override yours. Drop in a
 # .c -- here or one directory down -- and it compiles, no editing this file.
-#   make | make release | make debug | make pedantic | make ut | make clean
+#   make | make release | make debug | make pedantic | make ut | make ut-asan | make clean
 SHELL = /bin/sh
 
 BIN     = aisconfig
@@ -35,7 +35,7 @@ release  : CFLAGS = -O2
 %.o: %.c
 	$(CC) $(PROJ) $(CPPFLAGS) $(CFLAGS) -MMD -c $< -o $@
 
-.PHONY: all release debug pedantic ut clean
+.PHONY: all release debug pedantic ut ut-asan clean
 all release debug pedantic: $(BIN)
 
 $(BIN): $(OBJS)
@@ -45,6 +45,14 @@ $(BIN): $(OBJS)
 $(TESTBIN): $(SOURCES.c)
 	$(CC) $(PROJ) -g -DUNIT_TEST $(CPPFLAGS) $(SOURCES.c) -o $(TESTBIN) $(LDLIBS)
 ut: $(TESTBIN)
+	./$(TESTBIN)
+
+# ut-asan: the same tests under AddressSanitizer + UBSan. A leak, overflow, or
+# UB aborts with a file:line report instead of passing silently. Run before
+# tagging a release (and in CI). A fresh build each time, not the plain objects.
+ut-asan: $(SOURCES.c)
+	$(CC) $(PROJ) -g -DUNIT_TEST -fsanitize=address,undefined -fno-omit-frame-pointer \
+		$(CPPFLAGS) $(SOURCES.c) -o $(TESTBIN) $(LDLIBS)
 	./$(TESTBIN)
 
 clean:
