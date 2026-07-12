@@ -8,7 +8,6 @@
 #include "utils.h"
 #include "hash.h"
 #include "params.h"
-#include "md5.h"
 #include "base64.h"
 #include "process.h"
 #include "constants.h"
@@ -22,15 +21,6 @@ static int pass, fail;
     if (cond) pass++; \
     else { fail++; printf("  FAIL %s  (%s:%d)\n", msg, __FILE__, __LINE__); } \
 } while (0)
-
-static void md5_hex(const char *s, char out[33]) {
-    MD5_CTX c; int i;
-    MD5Init(&c);
-    MD5Update(&c, (const unsigned char *)s, (unsigned)strlen(s));
-    MD5Final(&c);
-    for (i = 0; i < 16; i++) snprintf(out + 2 * i, 3, "%02x", c.digest[i]);
-    out[32] = '\0';
-}
 
 static void test_utils(void) {
     char a[16];
@@ -61,12 +51,6 @@ static void test_params(void) {
     params_free();
 }
 
-static void test_md5(void) {
-    char h[33];
-    md5_hex("", h);    CHECK(strcmp(h, "d41d8cd98f00b204e9800998ecf8427e") == 0, "md5 of empty");
-    md5_hex("abc", h); CHECK(strcmp(h, "900150983cd24fb0d6963f7d28e17f72") == 0, "md5 of abc");
-}
-
 static void test_base64(void) {
     char enc[16], dec[16];
     CHECK(base64_encode(5, "hello", sizeof enc, enc) == 0, "b64 encode ok");
@@ -79,8 +63,7 @@ static void test_base64(void) {
 static void test_process(void) {
     char a[MAX_OUTPUT], b[MAX_OUTPUT];
     CHECK(process("abc", a, sizeof a) == 0, "process ok");
-    CHECK(strlen(a) == 22, "process id length");
-    CHECK(strcmp(a, "kAFQmDzST7DWlj99KOF/cg") == 0, "process id value");
+    CHECK(strcmp(a, "YWJj") == 0, "process value");        /* Base64("abc") */
     process("abc", b, sizeof b); CHECK(strcmp(a, b) == 0, "process deterministic");
     process("abd", b, sizeof b); CHECK(strcmp(a, b) != 0, "process distinguishes");
     CHECK(process("abc", a, 4) == -1, "process guards small buffer");
@@ -90,7 +73,6 @@ int main(void) {
     test_utils();
     test_hash();
     test_params();
-    test_md5();
     test_base64();
     test_process();
     printf("ut: %d passed, %d failed\n", pass, fail);

@@ -20,10 +20,10 @@ build, how to test, or how to write it safely.
     echo abc | ./aisconfig       # or read one line from stdin (filter mode)
     ./aisconfig -d abc           # with debug tracing on stderr
 
-The default `process()` is one public, dependency-free example: a short id for a
-string (Base64 of its MD5, padding dropped). `md5.c` and `base64.c` are leftovers
-from a real production project, kept only as example utilities the default processor uses;
-delete them when you replace `process()` with your own.
+The default `process()` is one public, dependency-free example: the Base64 of the
+input string. `base64.c` is a leftover from a real production project, kept only
+as an example utility the default processor uses; delete it when you replace
+`process()` with your own.
 
 ## Layout
 
@@ -35,7 +35,6 @@ utils.c/.h        bounded string helpers (rtrim/ltrim)
 params.c/.h       config: load system.properties, params_get("key")
 hash.c/.h         generic string -> void* hash table (backs params)
 system.properties example config
-md5.c/.h          example utility used by the default processor
 base64.c/.h       example utility used by the default processor
 constants.h       tunable sizes
 tests.c           in-place unit tests (make ut)
@@ -90,6 +89,4 @@ it, not the argument for it.
 
 ## Third-party notices
 
-`md5.c/.h` is the RSA Data Security, Inc. MD5 Message Digest Algorithm (retain
-its notice). `base64.c` encode/decode are by Lew Pitcher. Everything else is
-under `LICENSE`.
+`base64.c` encode/decode are by Lew Pitcher. Everything else is under `LICENSE`.
