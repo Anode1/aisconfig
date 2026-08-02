@@ -27,7 +27,7 @@ OBJS       = $(SOURCES.c:.c=.o)
 debug    : CFLAGS = -g -O0
 debug    : WARN  += -Wundef
 pedantic : STD    = -std=c99 -pedantic
-pedantic : WARN  += -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations
+pedantic : WARN  += -Wshadow -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations
 release  : CFLAGS = -O2
 
 .SUFFIXES:
