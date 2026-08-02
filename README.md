@@ -11,9 +11,9 @@ build, how to test, or how to write it safely.
     make            # build ./aisconfig
     make ut         # build and run the in-place unit tests
     make ut-asan    # run the tests under AddressSanitizer + UBSan
-    make debug      # -g -DDEBUG
+    make debug      # -g -O0
     make pedantic   # strict warnings (-pedantic -Wshadow -Wstrict-prototypes ...)
-    make release    # -O2 -DNDEBUG
+    make release    # -O2
     make clean
 
     ./aisconfig abc              # process an argument
