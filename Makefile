@@ -35,8 +35,18 @@ release  : CFLAGS = -O2
 %.o: %.c
 	$(CC) $(PROJ) $(CPPFLAGS) $(CFLAGS) -MMD -c $< -o $@
 
-.PHONY: all release debug pedantic ut ut-asan clean
-all release debug pedantic: $(BIN)
+.PHONY: all release debug pedantic ut ut-asan clean modeclean
+# A mode target changes CFLAGS, and a target-specific variable does NOT invalidate
+# an existing .o. So `make` then `make debug` reported "Nothing to be done" and
+# left you the -O2 objects while you believed you had a debug build. Each mode
+# drops the objects first; `all` does not, so the ordinary edit-build loop is
+# still incremental.
+modeclean:
+	@rm -f $(OBJS) $(OBJS:.o=.d) $(BIN)
+
+all: $(BIN)
+release debug pedantic: modeclean
+	@$(MAKE) --no-print-directory $(BIN) STD='$(STD)' WARN='$(WARN)' CFLAGS='$(CFLAGS)'
 
 $(BIN): $(OBJS)
 	$(CC) $(PROJ) $(CFLAGS) $(LDFLAGS) -o $(BIN) $(OBJS) $(LDLIBS)
