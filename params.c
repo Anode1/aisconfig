@@ -37,7 +37,9 @@ int params_load(const char *path) {
         rtrim(val, ' '); ltrim(val, ' ');
         if (key[0] == '\0') continue;
 
-        hash_put(params, key, xstrdup(val));        /* table copies the key */
+        free(hash_put(params, key, xstrdup(val))); /* table copies the key;
+                                                      free any value displaced
+                                                      by a duplicate key */
     }
     fclose(fp);
     return 0;

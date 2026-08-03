@@ -9,7 +9,10 @@ struct hash;
 struct hash *hash_create(long size);
 void         hash_delete(struct hash *table);              /* frees keys + table */
 
-/* Insert or replace. Returns the data now stored under key. */
+/* Insert or replace. Returns the PREVIOUS data for key, or NULL if there was
+ * none, so the caller can free what it displaced. The table owns keys, never
+ * data: returning the new pointer instead silently dropped the old one on the
+ * floor, and every project copying this template inherited the leak. */
 void *hash_put(struct hash *table, const char *key, void *data);
 void *hash_get(struct hash *table, const char *key);       /* NULL if absent */
 

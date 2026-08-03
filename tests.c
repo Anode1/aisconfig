@@ -35,6 +35,20 @@ static void test_hash(void) {
     hash_put(h, "k", "one");
     CHECK(strcmp((char *)hash_get(h, "k"), "one") == 0, "hash get");
     hash_put(h, "k", "two");
+    /* hash_put hands back what it displaced, so the caller can free it. It used
+     * to return the NEW pointer, so params_load leaked every duplicate key. */
+    {
+        struct hash *lh = hash_create(8);
+        void *first = xstrdup("first");
+        void *prev;
+        CHECK(hash_put(lh, "dup", first) == NULL, "hash: first put displaces nothing");
+        prev = hash_put(lh, "dup", xstrdup("second"));
+        CHECK(prev == first, "hash: replace returns the displaced value to free");
+        free(prev);
+        CHECK(strcmp((char *)hash_get(lh, "dup"), "second") == 0, "hash: replace stored the new one");
+        free(hash_get(lh, "dup"));
+        hash_delete(lh);
+    }
     CHECK(strcmp((char *)hash_get(h, "k"), "two") == 0, "hash replace");
     CHECK(hash_get(h, "absent") == NULL, "hash miss");
     CHECK(strcmp((char *)hash_delete_entry(h, "k"), "two") == 0, "hash delete");

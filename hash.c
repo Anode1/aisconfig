@@ -61,8 +61,9 @@ void *hash_put(struct hash *table, const char *key, void *data) {
 
     for (b = table->table[val]; b; b = b->next)
         if (strcmp(key, b->key) == 0) {           /* replace */
+            void *old = b->data;                  /* hand it back; caller owns it */
             b->data = data;
-            return data;
+            return old;
         }
 
     b = xmalloc(sizeof *b);                        /* prepend new */
@@ -71,7 +72,7 @@ void *hash_put(struct hash *table, const char *key, void *data) {
     b->next = table->table[val];
     table->table[val] = b;
     table->n++;
-    return data;
+    return NULL;                                   /* nothing was displaced */
 }
 
 void *hash_get(struct hash *table, const char *key) {
